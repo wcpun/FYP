@@ -1,8 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "server.h"
 #include "dedup.h"
+#include "../common/debug.h"
 
 void Sigint_handler(int sig)
 {
@@ -30,23 +32,24 @@ void *ThreadVerify(void *args)
 
 void* ThreadUpload(void* args)
 {
-	int fd;
-	dedupObj_t *dedupObj;
 	pthread_detach(pthread_self());
-	fd = ((UploadArgs*) args) -> fd;
-	dedupObj = ((UploadArgs*) args) -> dedupObj;
+	int fd = ((UploadArgs*) args) -> fd;
+	dedupObj_t *dedupObj = ((UploadArgs*) args) -> dedupObj;
 	free(args);
+
 	Meta_t meta;
 	Code_t code;
 	Input_t input;
-	while(1){
-		int indicator = RecvInt(fd);
-		DEBUG(indicator,int);
+
+	int indicator;
+
+	while((indicator = RecvInt(fd)) != END){
+		// debug("%d",indicator);
 		if (indicator == SENDMETA){
 			meta=RecvMeta(fd);
-			// DEBUG(meta.fileName,str);
-			// DEBUG(meta.fileNameSize,int);
-			// DEBUG(meta.fileSize,int);
+			// debug("%s",meta.fileName);
+			// debug("%d",meta.fileNameSize);
+			// debug("%d",meta.fileSize);
 		}
 		if (indicator == SENDCODE){
 			code=RecvCode(fd);
@@ -55,9 +58,6 @@ void* ThreadUpload(void* args)
 		if (indicator == SENDDATA){
 			input=RecvInput(fd);
 			// displayCiper(input.ciper,input.ciperSize);
-		}
-		if (indicator == END){
-			break;
 		}
 	}
 	// begin dedup
@@ -79,7 +79,7 @@ void* ThreadDownload(void* args)
 	Meta_t meta;
 	meta=RecvMeta(fd);
 	restore(fd, *dedupObj, meta.fileName);
-	SendInt(fd,END);
+
 	close(fd);
 	pthread_exit(NULL);
 }
@@ -92,13 +92,12 @@ void RunServer(int lsd)
 	pthread_t threadID;
 
 	while (1){
-		printf("Waiting for connection ...\n");
+		// printf("Waiting for connection ...\n");
 		fd_cli = AcceptConnection(lsd);
 		// displayDedupObj(dedupObj);
 		// recv indicator first
 		indicator = RecvInt(fd_cli);
-		printf("Received indicator: %d\n", indicator);
-
+		// debug("%d",indicator);
 		switch (indicator){
 
 			case UPLOAD:{

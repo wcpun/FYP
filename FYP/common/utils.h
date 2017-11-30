@@ -2,7 +2,7 @@
 #define _UTILS_H__
 
 #define FILE_TABLE_SIZE 128
-#define POINTER_TABLE_SIZE (2*1024)
+#define POINTER_TABLE_SIZE 1024*1024
 #define CHUNK_LIST_TABLE_SIZE 128
 
 typedef struct{

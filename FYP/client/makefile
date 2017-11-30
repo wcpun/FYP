@@ -1,7 +1,7 @@
 CC		= gcc
 CFLAGS		= -g -c -Wall 
 LDFLAGS		= -lcrypto
-SOURCES		= main.c client.c crypto.c chunk.c ../common/utils.c ../common/tcp.c
+SOURCES		= main.c client.c crypto.c chunk.c ../common/utils.c ../common/tcp.c ../common/debug.c
 INCLUDES	= -I../common/
 OBJECTS		= $(SOURCES:.c=.o)
 TARGET		= client

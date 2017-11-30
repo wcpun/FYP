@@ -17,7 +17,6 @@ void freeDedupObj(dedupObj_t *dedupObj);
 
 int dedup(dedupObj_t *dedupObj, Meta_t meta, Code_t code, Input_t input);
 int restore(int fd, dedupObj_t dedupObj, char* fileName);
-void readChunk(char* chunkName, int chunkSize, char* buffer);
-void writeChunk(char* chunkName, unsigned char* chunk, int chunkSize);
+
 
 #endif

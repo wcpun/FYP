@@ -1,12 +1,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
+
 #include "client.h"
 #include "chunk.h"
+#include "../common/debug.h"
+
+struct timeval tv1, tv2;
 
 // constant for chunking
-#define BUFFER_SIZE (1024*1024)
-#define INDEX_LIST_SIZE 256
+#define BUFFER_SIZE (1024*1024*16)
+#define INDEX_LIST_SIZE 1024
+
+void printTime(struct timeval tv1, struct timeval tv2)
+{
+	printf ("Total time = %f seconds\n",
+         (double) (tv2.tv_usec - tv1.tv_usec) / 1000000 +
+         (double) (tv2.tv_sec - tv1.tv_sec));
+}
 
 void usage(char* s)
 {
@@ -16,26 +28,18 @@ void usage(char* s)
 	exit(1);
 }
 
-int main(int argc, char* argv[])
+void storage(char* fileName)
 {
-	if (argc != 3) usage(NULL);
-
-	char* opt = argv[2];
-	char* fileName = argv[1];
-
-	Meta_t meta;
-
-	if (strncmp(opt,"-u",2) == 0){
 		unsigned char *buffer = (unsigned char*)malloc(sizeof(unsigned char)*BUFFER_SIZE);
 		int *indexList = (int*)malloc(sizeof(int)*INDEX_LIST_SIZE);
 		int numOfCut;
-		meta = initMeta(fileName);
-		// DEBUG(meta.fileName,str);
+		Meta_t meta = initMeta(fileName);
+		// debug("%s",meta.fileName);
 
-		FILE *fin = fopen(fileName,"r");
+		FILE *fin = fopen(fileName,"rb");
 		int ret = fread(buffer,1,meta.fileSize,fin);
 		chunking(buffer,ret,indexList,&numOfCut,VAR_SIZE_T);
-		// DEBUG(numOfCut,int);
+		DEBUG(numOfCut,int);
 		// displayChunk(buffer,ret,indexList,numOfCut);
 		unsigned char *chunk, *ciper;
 		int offset=0;
@@ -47,7 +51,7 @@ int main(int argc, char* argv[])
 			ciper = (unsigned char*)malloc(sizeof(char)*len_ciper);
 			memcpy(chunk,buffer+offset,len_chunk);
 			Code_t code = initCode(chunk,len_chunk,i);
-			// DEBUG(len_chunk,int);
+			// debug("%d",len_chunk);
 			int len_ciper = encrypt(chunk,len_chunk,code.key,code.iv,ciper);
 			Input_t input = initInput(ciper,len_ciper,len_chunk,i);
 			// displayCiper(input.ciper,input.ciperSize);
@@ -58,19 +62,53 @@ int main(int argc, char* argv[])
 			free(ciper);
 			free(chunk);
 		}
-		fclose(fin);
 		free(buffer);
 		free(indexList);
+}
+
+
+void retrieval(char* fileName)
+{
+	Meta_t meta;
+	char tmp[50];
+
+	sscanf(fileName,"%*[^/]/%s",tmp);
+	int fileNameSize = strlen(tmp)+1;
+	// tmp[fileNameSize]="\0";
+	// printf("tmp: %s\n",tmp);
+
+	meta.fileName = (char*)malloc(fileNameSize*sizeof(char));
+	memcpy(meta.fileName,tmp,fileNameSize);
+	meta.fileNameSize=fileNameSize;
+	// meta.fileName[fileNameSize]="\0";
+
+	// debug("%s",meta.fileName);
+	// debug("%d",meta.fileNameSize);
+	meta.fileSize=0;
+	download(meta);
+}
+
+int main(int argc, char* argv[])
+{
+	if (argc != 3) usage(NULL);
+
+	char* opt = argv[2];
+	char* fileName = argv[1];
+
+	if (strncmp(opt,"-u",2) == 0){
+		gettimeofday(&tv1, NULL);
+		storage(fileName);
+		gettimeofday(&tv2, NULL);
+		printTime(tv1,tv2);
 	}
-	if (strncmp(opt,"-d",2) == 0){
-		meta.fileName=fileName;
-		meta.fileNameSize=strlen(fileName);
-		meta.fileSize=0;
-		download(meta);
+	else if (strncmp(opt,"-d",2) == 0){
+		gettimeofday(&tv1, NULL);
+		retrieval(fileName);
+		gettimeofday(&tv2, NULL);
+		printTime(tv1,tv2);
 	}
-	if (strncmp(opt,"-v",2) == 0){
-		verify();
-	}
+	else verify();
 
 	return 0;
 }
+

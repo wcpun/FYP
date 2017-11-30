@@ -16,18 +16,14 @@
 #define VERIFY (-1)
 #define SENDMETA (-2)
 #define SENDDATA (-3)
-#define SENDCODE (-7)
-#define SENDCHUNK (-8)
-#define UPLOAD (-4)
-#define DOWNLOAD (-5)
-#define END (-6)
+#define SENDCODE (-4)
+#define SENDCHUNK (-5)
+#define UPLOAD (-6)
+#define DOWNLOAD (-7)
+#define END (-8)
+#define CHUNKEND (-9)
+#define FILENOTEXIST (-11)
 
-#define DEBUG(var, type) DEBUG_##type(var)
-#define DEBUG_int(var) printf("Line:%d " #var ": %d\n", __LINE__, var)
-#define DEBUG_str(var) printf("Line:%d " #var ": %s\n", __LINE__, var)
-
-
-void error(const char* msg);
 
 /* Create a socket descriptor for a server. */
 int CreateServer(int servPort);

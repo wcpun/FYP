@@ -16,7 +16,6 @@ typedef struct{
 	dedupObj_t *dedupObj;
 }UploadArgs, DownloadArgs;
 
-// #define DownloadArgs UploadArgs
 
 void* ThreadVerify(void* VerifyArgs);
 void* ThreadUpload(void* UploadArgs);

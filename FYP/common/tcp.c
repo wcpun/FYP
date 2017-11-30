@@ -3,12 +3,7 @@
 #include <stdlib.h> /* atoi, exit */
 #include <string.h> /* memset, bzero, bcopy */
 #include <fcntl.h> /* open, O_RDONLY, O_WRONLY, O_CREAT */
-
-void error(const char* msg)
-{
-	perror(msg);
-	exit(0);
-}
+#include "debug.h"
 
 /* Create a socket descriptor for a server. */
 int CreateServer(int servPort)
@@ -31,7 +26,7 @@ int CreateServer(int servPort)
     /* Bind a socket to an address*/
     if (bind(sd, (struct sockaddr *) &serv_addr, 
     	     sizeof(serv_addr)) < 0) 
-    	error("ERROR on binding");
+    	error("ERROR: Cannot Blind a Sockey.");
 
     /* The server is waiting for connection. */
     listen(sd, 5);
@@ -172,7 +167,7 @@ Meta_t RecvMeta(int fd)
 	meta.fileName=(char*)malloc(sizeof(char)*meta.fileNameSize);
 	if (recv(fd,meta.fileName,meta.fileNameSize,0)<0)
 		error("ERROR: Cannot Recv FileName.");
-	// DEBUG(meta.fileName,str);
+	// debug("%s",meta.fileName);
 	return meta;
 }
 

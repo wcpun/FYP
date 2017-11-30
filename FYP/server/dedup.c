@@ -3,16 +3,18 @@
 #include <string.h>
 
 #include "dedup.h"
+#include "fs.h"
+#include "../common/debug.h"
 
 dedupObj_t initDedupObj()
 {
 	dedupObj_t dedupObj;
 	if ((dedupObj.filetable=createFileTable())==NULL)
-		printf("ERROR: Cannot Init FileTable.\n");
+		error("ERROR: Cannot Init FileTable.\n");
 	if ((dedupObj.pointertable=createPointerTable())==NULL)
-		printf("ERROR: Cannot Init PointerTable.\n");
+		error("ERROR: Cannot Init PointerTable.\n");
 	if ((dedupObj.chunklist=createChunkList())==NULL)
-		printf("ERROR: Cannot Init ChunkList.\n");
+		error("ERROR: Cannot Init ChunkList.\n");
 	return dedupObj;
 }
 
@@ -40,7 +42,7 @@ int dedup(dedupObj_t *dedupObj, Meta_t meta, Code_t code, Input_t input)
 	char chunkName[10];
 	unsigned int chunkID=hashchunkID(input.ciper);
 	
-	printf("chunkID: %u\n",chunkID);
+	// debug("%u",chunkID);
 	sprintf(chunkName,"%u",chunkID);
 	if (lookupFile(dedupObj->filetable,meta.fileName) == NULL){
 		// file does not in filetable then insert filenode and the 1st chunk
@@ -85,6 +87,7 @@ int restore(int fd, dedupObj_t dedupObj, char* fileName)
 
 	if ((filenode=lookupFile(dedupObj.filetable,fileName))==NULL){
 		// file does not exist
+		SendInt(fd, FILENOTEXIST);
 		return -1;
 	}
 	else{
@@ -94,7 +97,8 @@ int restore(int fd, dedupObj_t dedupObj, char* fileName)
 
 		// for every chunk in chunklist
 		while(chunknode!=NULL){
-			// read chunk first		
+			// read chunk first
+			// debug("%u",chunknode->chunkID);
 			chunk_buffer=(char*)malloc(sizeof(char)*chunknode->ciperSize);
 			readChunk(chunknode->chunkName,chunknode->ciperSize,chunk_buffer);
 			chunkID=chunknode->chunkID;
@@ -106,30 +110,10 @@ int restore(int fd, dedupObj_t dedupObj, char* fileName)
 			chunknode=chunknode->next;
 			free(chunk_buffer);
 		}
+
+		SendInt(fd,END);
 	}
 	return 1;
 }
 
 
-void readChunk(char* chunkName, int chunkSize, char* buffer){
-	char fileName[50];
-	strcpy(fileName,"data/");
-	strncat(fileName,chunkName,strlen(chunkName));
-
-	FILE *fp = fopen(fileName,"rb");
-	int ret = fread(buffer,chunkSize,1,fp);
-	if (ret < 0)
-		printf("ERROR: Cannot Read File.\n");
-	fclose(fp);
-}
-void writeChunk(char* chunkName, unsigned char* chunk, int chunkSize){
-	char fileName[50];
-	strcpy(fileName,"data/");
-	strncat(fileName,chunkName,strlen(chunkName));
-
-	FILE *fp = fopen(fileName,"wb");
-	int ret = fwrite(chunk,chunkSize,1,fp);
-	if (ret < 0)
-		printf("ERROR: Cannot Write File.\n");
-	fclose(fp);
-}

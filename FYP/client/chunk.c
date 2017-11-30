@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "chunk.h"
+#include "../common/debug.h"
 
 void chunking(unsigned char *buff, int size, int *indexList, int *num, int type)
 {
